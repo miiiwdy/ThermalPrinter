@@ -1,7 +1,7 @@
-# JavaScript Bluetooth Thermal Printer
+# JavaScript Serial Bluetooth Thermal Printer
 
 Source code ini berisi sebuah program untuk melakukan pengujian print struk menggunakan
-printer Thermal melalui **Serial** Bluetooth menggunakan `navigator` dari JavaScript.
+printer Thermal melalui **Serial Bluetooth** menggunakan `navigator` dari JavaScript.
 
 Printer thermal pada pengujian ini menggunakan merk **OKAY 58B** dengan kertas thermal
 berukuran 57x30mm atau 58x30mm.
