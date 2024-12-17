@@ -3,7 +3,7 @@
 Source code ini berisi sebuah program untuk melakukan pengujian print struk menggunakan
 printer Thermal melalui Bluetooth menggunakan `navigator` dari JavaScript.
 
-Printer thermal pada pengujian ini menggunakan merk **VSC MP 58A** dengan kertas thermal
+Printer thermal pada pengujian ini menggunakan merk **OKAY 58B** dengan kertas thermal
 berukuran 57x30mm atau 58x30mm.
 
 ## Cara Instal
