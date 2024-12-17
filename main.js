@@ -1,26 +1,20 @@
+const btnConnect = document.querySelector(".btnConnect");
+const btnPrint = document.querySelector(".btnPrint");
+const txtStatus = document.querySelector(".txtStatus");
+const txtNamaDevice = document.querySelector(".txtNamaDevice");
+const btnDisconnect = document.querySelector(".btnDisconnect");
 
-const SERVICE_UUID = "000018f0-0000-1000-8000-00805f9b34fb"
-const SERVICE_CHARACTERISTIC = "00002af1-0000-1000-8000-00805f9b34fb"
-
-const btnConnect = document.querySelector(".btnConnect")
-const btnPrint = document.querySelector(".btnPrint")
-const txtStatus = document.querySelector(".txtStatus")
-const txtNamaDevice = document.querySelector(".txtNamaDevice")
-const btnDisconnect = document.querySelector(".btnDisconnect")
-
-let characteristic = null;
 let printer = null;
+let writer = null;
 
-txtStatus.innerHTML = `<span class='badge bg-danger'>OFF</span>`
-
+txtStatus.innerHTML = `<span class='badge bg-danger'>OFF</span>`;
 
 const Printable = {
   Align: {
     center: (text) => '\x1B' + '\x61' + '\x31' + text,
     left: (text) => '\x1B' + '\x61' + '\x00' + text,
     right: (text) => '\x1B' + '\x61' + '\x02' + text,
-    reset: () => '\x1B' + '\x61' + '\x31' + '\x1D' + '\x21' 
-                  + '\x00' + '\n'.repeat(2) + '\r'
+    reset: () => '\x1B' + '\x61' + '\x31' + '\x1D' + '\x21' + '\x00' + '\n'.repeat(2) + '\r'
   },
   Keyboard: {
     enter: (count) => '\n'.repeat(count) + '\r',
@@ -34,27 +28,30 @@ const Printable = {
   }
 }
 
-
 const print = async (text) => {
   let textEncoder = new TextEncoder("utf-8");
   text = textEncoder.encode(text);
-  
+
   txtNamaDevice.innerHTML = 'Sedang mencetak...';
 
-  await characteristic.writeValue(text);
+  try {
+    await writer.write(text);
+  } catch (error) {
+    console.error("Failed to write to printer", error);
+    alert("Gagal mencetak.");
+  }
 }
+
 const myPrintingTest = async () => {
   const texts = [
     Printable.Align.reset(),
-    Printable.Align.center(Printable.Font.large('PT. KML')),
-    Printable.Keyboard.enter(1),
-    Printable.Align.center(Printable.Font.normal('PT. Kopi Mantan Lama')),
+    Printable.Align.center(Printable.Font.large('PT. Ionbit Cafe')),
     Printable.Keyboard.enter(1),
     Printable.Misc.centerLine(10),
     Printable.Keyboard.enter(2),
-    Printable.Align.left(Printable.Font.normal('No. 4501')),
+    Printable.Align.left(Printable.Font.normal('No. 1')),
     Printable.Keyboard.enter(1),
-    Printable.Align.left(Printable.Font.normal('Kasir: Fitri')),
+    Printable.Align.left(Printable.Font.normal('Kasir: Rafi')),
     Printable.Keyboard.enter(2),
     Printable.Align.left(Printable.Font.normal('Short Black (Espresso)')),
     Printable.Keyboard.enter(1),
@@ -64,11 +61,11 @@ const myPrintingTest = async () => {
     Printable.Keyboard.enter(1),
     Printable.Align.left(Printable.Font.normal('Qty 2 x 25.000 @ 50.000')),
     Printable.Keyboard.enter(2),
-    Printable.Align.left(Printable.Font.normal('PPN\t: 11% ')),
+    Printable.Align.left(Printable.Font.normal('PPN\t: 12% ')),
     Printable.Keyboard.enter(1),
-    Printable.Align.left(Printable.Font.normal('Total\t: Rp. 79.920 ')),
+    Printable.Align.left(Printable.Font.normal('Total\t: Rp. 1.179.920 ')),
     Printable.Keyboard.enter(2),
-    Printable.Align.center(Printable.Font.normal("Terima Kasih")),
+    Printable.Align.center(Printable.Font.normal("mksh bro")),
     Printable.Align.reset(),
     Printable.Keyboard.enter(2),
   ]
@@ -79,63 +76,50 @@ const myPrintingTest = async () => {
 }
 
 const disconnect = () => {
-  printer.gatt.disconnect();
-  characteristic = null;
-  txtStatus.innerHTML = `<span class='badge bg-danger'>
-      OFF
-    </span>`
-  txtNamaDevice.innerHTML = ""
+  if (printer) {
+    printer.close();
+    txtStatus.innerHTML = `<span class='badge bg-danger'>OFF</span>`;
+    txtNamaDevice.innerHTML = "";
+    writer = null;
+  }
 }
 
 const connect = () => {
-  navigator.bluetooth.requestDevice({
-    filters: [{
-      services: [SERVICE_UUID]
-    }]
-  })
-  .then(device => { 
-    printer = device;
-    txtNamaDevice.innerHTML = `Menghubungkan ${device.name}`;
-    return device.gatt.connect();
-  })
-  .then(server => server.getPrimaryService(SERVICE_UUID))
-  .then(service => service.getCharacteristic(SERVICE_CHARACTERISTIC))
-  .then(chrt => {
-    txtNamaDevice.innerHTML = chrt.service.device.name;
-    txtStatus.innerHTML = `<span class='badge bg-primary'>
-      CONNECTED
-    </span>`
-    characteristic = chrt;
-  })
-  .catch(error => { 
-    console.error(error); 
-    alert("Printer ada masalah")
-  });
+  navigator.serial.requestPort()
+    .then(port => {
+      printer = port;
+      txtNamaDevice.innerHTML = `Menghubungkan ${printer.name}`;
+      return printer.open({ baudRate: 9600 });
+    })
+    .then(() => {
+      txtStatus.innerHTML = `<span class='badge bg-primary'>CONNECTED</span>`;
+      writer = printer.writable.getWriter();
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Printer ada masalah atau tidak ditemukan");
+    });
 }
 
 btnConnect.addEventListener("click", () => {
-  if (characteristic) {
-    alert("Printer sudah terhubung!")
+  if (printer && writer) {
+    alert("Printer sudah terhubung!");
     return;
   }
-
   connect();
-})
+});
 
 btnPrint.addEventListener("click", () => {
-  if (!characteristic) {
-    alert("Pastikan printer sudah terhubung.")
+  if (!printer || !writer) {
+    alert("Pastikan printer sudah terhubung.");
     return;
   }
-  
-  myPrintingTest()
-
-})
+  myPrintingTest();
+});
 
 btnDisconnect.addEventListener('click', () => {
-  if (!printer && !characteristic) {
-    alert("bluetooth belum terkoneksi")
+  if (!printer) {
+    alert("Bluetooth belum terkoneksi");
   }
-
-  disconnect()
-})
+  disconnect();
+});
