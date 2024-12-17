@@ -24,6 +24,6 @@ npm run dev
 
 Kemudian akses `https://localhost:5173/` di browser.
 
-Terima Kasih kepada:
+Terima Kasih kepada: **https://github.com/solanoize**
 
 
